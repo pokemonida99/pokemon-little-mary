@@ -66,7 +66,7 @@
     { id: 'jp', name: '超夢覺醒 JACKPOT', w: 0.4 },
     { id: 'fly', name: '鳳王飛走了', w: 17.6 },
   ];
-  const JP_RATE = 0.02, JP_SEED = 500;   // 每局押分的 2% 進彩金池
+  const JP_RATE = 0.02, JP_SEED = 500, JP_FULL = 80;   // 每局押分的 2% 進彩金池
 
   function pickW(ws, rng) { let s = 0; for (const w of ws) s += w; let x = rng() * s; for (let i = 0; i < ws.length; i++) { x -= ws[i]; if (x < 0) return i; } return ws.length - 1; }
   function pickObj(obj, rng) { const ks = Object.keys(obj); return +ks[pickW(ks.map(k => obj[k]), rng)]; }
@@ -108,12 +108,15 @@
       else if (ev.id === 'small3') r.lamps = [2, 3, 4].map(k => PAYING.find(i => LAMPS[i].k === k && !LAMPS[i].s));
       else if (ev.id === 'big3') r.lamps = [5, 6, 7].map(k => PAYING.find(i => LAMPS[i].k === k && !LAMPS[i].s));
       else if (ev.id === 'corner') r.lamps = CORNERS.slice();
-      else if (ev.id === 'jp') { r.jp = st.jp; st.jp = JP_SEED; r.lamps = [0]; }
+      else if (ev.id === 'jp') {   // 總押分 JP_FULL 以上拿全部，不到照比例，剩下留在池裡
+        const share = Math.min(1, bets.reduce((a, b) => a + b, 0) / JP_FULL);
+        r.jp = Math.floor(st.jp * share); st.jp = share >= 1 ? JP_SEED : Math.max(JP_SEED, st.jp - r.jp); r.lamps = [0];
+      }
     }
     r.pay = r.lamps.reduce((a, i) => a + lampPay(i, bets), 0) * mult + r.jp;
     return r;
   }
 
-  const api = { KEYS, LAMPS, CORNERS, W, SP_P, KEY_P, build, BALL_N, SNOR_NEED, SNOR_GIFT, EVO_MAX, LUCKY, JP_RATE, JP_SEED, SMALL, play, lampPay, sendLamps, allBet };
+  const api = { KEYS, LAMPS, CORNERS, W, SP_P, KEY_P, build, BALL_N, SNOR_NEED, SNOR_GIFT, EVO_MAX, LUCKY, JP_RATE, JP_SEED, JP_FULL, SMALL, play, lampPay, sendLamps, allBet };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else G.CORE = api;
 })(typeof window !== 'undefined' ? window : globalThis);

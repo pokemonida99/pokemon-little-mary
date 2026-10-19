@@ -159,7 +159,9 @@ async function runTo(target, short = false) {
   const n = 24, d = (target - st.pos + n) % n;
   const laps = short ? 1 : 2 + (rnd() * 2 | 0), total = laps * n + d + (short && d < 6 ? n : 0);
   st.runner = { t0: st.t };
+  const fake = !short && rnd() < 0.25;   // 差一格：先停在前一格，頓一下再跳過去
   for (let s = 1; s <= total; s++) {
+    if (fake && s === total) { SFX.stop(); await sleep(480); }
     st.pos = (st.pos + 1) % n; lightRun(st.pos);
     const left = total - s;
     let ms = short ? 24 : 30;
@@ -239,7 +241,7 @@ function drawFx() {
     ctx.fillStyle = '#000c'; ctx.fillRect(0, 0, FW, FH);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `700 ${FH * 0.08}px system-ui`; ctx.fillStyle = '#fff';
-    ctx.fillText(`你猜「${d.big ? '大' : '小'}」　1–6 小・7 平手・8–13 大`, FW / 2, FH * 0.16);
+    ctx.fillText(`你猜「${d.big ? '大' : '小'}」　1–6 小／7 平手／8–13 大`, FW / 2, FH * 0.16);
     const big = d.n >= 8, col = d.n === 7 ? '#fff' : big ? '#ff6a5a' : '#5ab0ff';
     ctx.font = `900 ${FH * 0.42}px "Courier New", monospace`; ctx.fillStyle = col;
     ctx.shadowColor = col; ctx.shadowBlur = 24; ctx.fillText(d.n, FW / 2, FH * 0.52); ctx.shadowBlur = 0;
@@ -294,7 +296,7 @@ function frame(now) {
 // ---------- 介面更新 ----------
 function msg(t) { $('msg').textContent = t; }
 function renderLED() {
-  $('ledJp').textContent = fmt(S.jp); $('ledWin').textContent = fmt(S.win); $('ledCredit').textContent = fmt(S.credit);
+  $('ledJp').textContent = fmt(S.jp); $('ledWin').textContent = fmt(st.shownWin ?? S.win); $('ledCredit').textContent = fmt(S.credit);
 }
 function renderBets() {
   const showLast = sum(st.bets) === 0;
@@ -349,7 +351,7 @@ function insertCoin() {
   renderLED(); renderPanel(); persist();
 }
 function collect(quiet = false) {
-  if (S.win <= 0) return;
+  if (S.win <= 0 || st.busy) return;
   S.credit += S.win; S.win = 0; S.stats.dblRun = 0;
   if (!quiet) SFX.coin();
   $('ledWinBox').classList.remove('flash');
@@ -390,7 +392,8 @@ async function start() {
   S.pending = 0; S.win = total; S.stats.won += total;
   S.hist.unshift({ i: firstStop, p: total, e: event }); S.hist.length = Math.min(S.hist.length, 20);
   if (total > 0) {
-    S.stats.wins++; S.stats.streak++; S.stats.maxStreak = Math.max(S.stats.maxStreak, S.stats.streak);
+    S.stats.wins++;
+    if (total >= B) { S.stats.streak++; S.stats.maxStreak = Math.max(S.stats.maxStreak, S.stats.streak); } else S.stats.streak = 0;   // 贏回押分才算連勝
     if (total > S.stats.maxWin) S.stats.maxWin = total;
     await winShow(total, B, bestKey, event);
   } else {
@@ -434,7 +437,11 @@ async function present(r, bets) {
       await sleep(1300); await send(r.lamps);
     } else {
       SFX.snore(); st.snore = { t0: st.t };
-      msg(`卡比獸睡著了… 鬧鐘 ${S.snor}/${CORE.SNOR_NEED}`); await sleep(500);
+      if (S.snor >= CORE.SNOR_NEED - 3) {
+        card('卡比獸快醒了！', `鬧鐘 ${S.snor}/${CORE.SNOR_NEED}`, '#6fc3ff', 1100); tone(1760, 0.08, 'square', 0.1, null, 0.3); tone(1760, 0.08, 'square', 0.1, null, 0.45);
+        $('hudSnor').classList.remove('alarm'); void $('hudSnor').offsetWidth; $('hudSnor').classList.add('alarm');
+        await sleep(900);
+      } else { msg(`卡比獸睡著了… 鬧鐘 ${S.snor}/${CORE.SNOR_NEED}`); await sleep(500); }
     }
   } else if (r.type === 'evo') {
     S.stats.lampHit[r.stop]++; markHit(r.stop, 0);
@@ -483,13 +490,13 @@ async function winShow(total, B, bestKey, event) {
   $('ledWinBox').classList.remove('flash'); void $('ledWinBox').offsetWidth; $('ledWinBox').classList.add('flash');
   // 得分數字往上跳
   const steps = Math.min(24, Math.ceil(total / 5)), shownTarget = total;
-  for (let s = 1; s <= steps; s++) { S.win = Math.round(shownTarget * s / steps); renderLED(); SFX.tally(); await sleep(22); }
-  S.win = shownTarget; renderLED();
+  for (let s = 1; s <= steps; s++) { st.shownWin = Math.round(shownTarget * s / steps); renderLED(); SFX.tally(); await sleep(22); }
+  st.shownWin = null; renderLED();
   if (ratio >= 20) { SFX.big(); card('大獎！', `${fmt(total)} 分`, '#ffe14a', 2400, 1.1); burst(80, ['#ffe14a', '#ff6a5a', '#5dff7a', '#fff']); }
   else if (ratio >= 5) { SFX.win(); card('中獎！', `${fmt(total)} 分`, '#5dff7a', 1700); burst(40, ['#5dff7a', '#ffe14a', '#fff']); }
   else if (ratio >= 1) SFX.win(); else SFX.small();
   if (!event && bestKey >= 0 && ratio >= 5) playClip(WIN_CLIP[bestKey]);
-  const s = S.stats.streak;
+  const s = total >= B ? S.stats.streak : 0;
   if (STREAK_CLIP[s] || (s > 10 && s % 5 === 0)) {
     await sleep(500); SFX.streak();
     card(s >= 10 ? '超級連勝！' : '連續中獎！', `${s} 連勝`, '#ff9a3a', 1800);
@@ -525,6 +532,7 @@ async function double(big) {
   }
   renderLED(); await sleep(1300); st.dbl = null;
   st.busy = false; checkAch(); renderAll(); persist();
+  if (st.auto) { collect(true); start(); }
 }
 
 // ---------- 成就 ----------
@@ -579,7 +587,7 @@ function renderPanel() {
     ['彩金（次數／最高）', `${s.jp}／${fmt(s.jpBest)}`],
     ['遊玩時間', `${min} 分鐘`],
   ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
-  $('hist').innerHTML = S.hist.map(h => `<span title="${lampName(h.i)}${h.e ? '・' + EV_NAME[h.e] : ''}"><img src="${lampImg(h.i)}" alt="">${h.p > 0 ? `<b class="w">${fmt(h.p)}</b>` : ''}</span>`).join('') || '<span>還沒開始</span>';
+  $('hist').innerHTML = S.hist.map(h => `<span title="${lampName(h.i)}${h.e ? '／' + EV_NAME[h.e] : ''}"><img src="${lampImg(h.i)}" alt="">${h.p > 0 ? `<b class="w">${fmt(h.p)}</b>` : ''}</span>`).join('') || '<span>還沒開始</span>';
   $('dex').innerHTML = KEYS.map((K, k) => `<div class="${s.dex[k] ? 'got' : ''}"><img src="assets/sym/s${K.img}.webp" alt="">${s.dex[k] || 0}</div>`).join('')
     + `<div class="${s.wakes ? 'got' : ''}"><img src="assets/sym/s6.webp" alt="">${s.wakes}</div>`;
   $('hits').innerHTML = '<tr><th>寶可夢</th><th>大燈</th><th>小燈</th><th>押中</th></tr>' + KEYS.map((K, k) => {

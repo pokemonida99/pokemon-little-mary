@@ -76,6 +76,7 @@ aside h2:first-child { margin-top: 0; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 #hud { position: absolute; left: 6px; right: 6px; top: 6px; display: flex; justify-content: space-between; gap: 6px; pointer-events: none; font-size: clamp(10px, 2.6vw, 12px); }
 #hud span { background: #000a; border-radius: 6px; padding: 2px 7px; border: 1px solid #fff3; white-space: nowrap; }
+#hudSnor.alarm { animation: ledflash .2s steps(2) 8; border-color: #6fc3ff; }
 #snorBar { display: inline-flex; gap: 2px; vertical-align: middle; }
 #snorBar i { width: 6px; height: 9px; border-radius: 2px; background: #333; }
 #snorBar i.on { background: #6fc3ff; box-shadow: 0 0 4px #6fc3ff; }
@@ -180,7 +181,7 @@ details summary { cursor: pointer; color: var(--gold); font-weight: 700; }
 
   <main id="cab">
     <div class="bulbs" id="bulbs"></div>
-    <div class="marquee"><h1>寶可夢小瑪莉</h1><div class="sub">跑燈・送燈・開火車・比大小</div></div>
+    <div class="marquee"><h1>寶可夢小瑪莉</h1><div class="sub">跑燈、送燈、開火車、比大小</div></div>
     <div class="leds">
       <div class="led jp"><label>彩金</label><b id="ledJp">0</b></div>
       <div class="led win" id="ledWinBox"><label>得分</label><b id="ledWin">0</b></div>
@@ -227,11 +228,11 @@ details summary { cursor: pointer; color: var(--gold); font-weight: 700; }
     <p><b>傳說「LUCKY」</b>：抽一個傳說事件：</p>
     <table id="luckyTable"></table>
     <h2>彩金</h2>
-    <p>每局押分的 2% 會進彩金池。傳說燈抽到<b>超夢覺醒</b>，而且 8 個鍵都有押，就拿走整個彩金池！</p>
+    <p>每局押分的 2% 會進彩金池。傳說燈抽到<b>超夢覺醒</b>，而且 8 個鍵都有押就中彩金：總押分 80 分以上拿走整個彩金池，不到 80 分照比例拿（例如押 40 分拿一半），剩下的留在池裡。</p>
     <h2>期望值</h2>
-    <p>只押單一鍵約 92%，8 鍵全押約 94.5%（多的是彩金回饋）。比大小是公平的 50/50。</p>
+    <p>只押單一鍵約 92%，8 鍵全押約 94%（多的是彩金回饋）。比大小是公平的 50/50。</p>
     <h2>連勝</h2>
-    <p>連續中獎 3、5、10 局有特別演出。</p>
+    <p>連續 3、5、10 局贏回押分以上，有特別演出。</p>
     <h2>快捷鍵</h2>
     <p><kbd>1</kbd>–<kbd>8</kbd> 押注　<kbd>空白</kbd> 開始　<kbd>C</kbd> 投幣　<kbd>A</kbd> 全押　<kbd>Z</kbd> 小　<kbd>X</kbd> 大　<kbd>Q</kbd> 收分</p>
     <p style="color:var(--dim);font-size:12px">粉絲自製的免費小遊戲，不能儲值、不能兌換。寶可夢相關名稱與角色屬於原權利人。</p>
