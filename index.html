@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a0710">
+<title>寶可夢小瑪莉</title>
+<meta name="description" content="台灣傳統小瑪莉跑燈機台，水果換成寶可夢：跑燈、送燈、開火車、進化連發、比大小、彩金。">
+<style>
+:root {
+  --bg: #12060c; --cab: #5a0f1f; --cab2: #2b0710; --gold: #ffcf4a; --gold2: #b8860b;
+  --led: #ff3b30; --ledbg: #1a0303; --txt: #fff3e0; --dim: #c9a79a; --panel: #1f0b12; --line: #4a2030;
+  --lamp: #2a1018; --lampOn: #fff6c8;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: radial-gradient(ellipse at top, #3a0c1c, var(--bg) 70%) fixed; color: var(--txt);
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; }
+body { min-height: 100vh; }
+button { font: inherit; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+#app { display: grid; grid-template-columns: 1fr minmax(320px, min(580px, calc(100vh - 515px))) 1fr; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 16px; align-items: start; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; line-height: 1.6; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+aside h2 { font-size: 16px; color: var(--gold); margin: 14px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+aside h2:first-child { margin-top: 0; }
+
+/* ---- cabinet ---- */
+#cab { background: linear-gradient(180deg, #8a1a2c, var(--cab) 18%, var(--cab2)); border-radius: 26px 26px 18px 18px; padding: 12px;
+  box-shadow: 0 0 0 3px var(--gold2), 0 0 0 7px #3a0a14, 0 0 0 9px var(--gold2), 0 20px 60px #000c; position: relative; }
+.marquee { text-align: center; padding: 6px 0 10px; position: relative; }
+.marquee h1 { margin: 0; font-size: clamp(26px, 7vw, 40px); letter-spacing: 6px; font-weight: 900;
+  background: linear-gradient(180deg, #fff7b0, var(--gold) 45%, #ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 #6a1500) drop-shadow(0 0 10px #ff9a0080); }
+.marquee .sub { font-size: 12px; color: var(--dim); letter-spacing: 3px; }
+.bulbs { display: flex; justify-content: space-between; padding: 0 6px; margin-bottom: 6px; }
+.bulbs i { width: 9px; height: 9px; border-radius: 50%; background: #5a3a10; box-shadow: inset 0 0 2px #000; }
+.bulbs i.on { background: #ffe680; box-shadow: 0 0 8px #ffd000; }
+
+.leds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.led { background: var(--ledbg); border: 2px solid #3a0b0b; border-radius: 8px; padding: 3px 8px 4px; text-align: right; box-shadow: inset 0 0 12px #000; }
+.led label { display: block; text-align: left; font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+.led b { font: 700 clamp(18px, 5vw, 26px)/1.1 "Courier New", ui-monospace, monospace; color: var(--led); text-shadow: 0 0 6px #ff1a00, 0 0 14px #ff1a0080; letter-spacing: 1px; }
+.led.jp b { color: #ffd23f; text-shadow: 0 0 6px #ffb000, 0 0 14px #ffb00080; }
+.led.win b { color: #5dff7a; text-shadow: 0 0 6px #00ff40, 0 0 14px #00ff4080; }
+.led.flash { animation: ledflash .25s steps(2) 6; }
+@keyframes ledflash { 50% { filter: brightness(2); } }
+
+/* ---- board: 7x7, outer ring = 24 lamps ---- */
+#board { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); gap: 4px; aspect-ratio: 1; background: #0d0306;
+  border-radius: 12px; padding: 6px; border: 3px solid var(--gold2); box-shadow: inset 0 0 20px #000; }
+.lamp { position: relative; background: radial-gradient(circle at 50% 40%, #3a1622, var(--lamp)); border-radius: 9px; border: 2px solid #4a1d2a;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; transition: background .25s, box-shadow .25s, border-color .25s; }
+.lamp img { width: 78%; height: 78%; object-fit: contain; filter: saturate(.55) brightness(.62); transition: filter .2s, transform .2s; pointer-events: none; }
+.lamp.small img { width: 52%; height: 52%; transform: translateY(-6%); }
+.lamp .mul { position: absolute; bottom: 1px; right: 3px; font: 800 clamp(9px, 2.3vw, 13px)/1 system-ui, sans-serif; color: #ffd98a; text-shadow: 0 1px 0 #000, 0 0 3px #000; }
+.lamp.small .mul { left: 0; right: 0; text-align: center; color: #9fd8ff; }
+.lamp .mul.big { color: #ff6bd6; }
+.lamp .bulb { position: absolute; top: 3px; left: 3px; width: 7px; height: 7px; border-radius: 50%; background: #551; }
+.lamp .sptxt { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; font: 900 clamp(10px, 2.6vw, 14px)/1 system-ui, sans-serif; text-shadow: 0 1px 0 #000, 0 0 4px #000; }
+.lamp.sp-lucky .sptxt { background: linear-gradient(90deg, #ff5a5a, #ffd23f, #5dff7a, #4fb0ff, #c86bff); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 1px 0 #000); }
+.lamp.sp-ball .sptxt { color: #ff6b6b; } .lamp.sp-evo .sptxt { color: #7dff9a; } .lamp.sp-snor .sptxt { color: #9fd8ff; }
+.lamp.corner { border-color: #8a5a10; }
+.lamp.t2 { background: radial-gradient(circle at 50% 40%, #6a3a1a, #3a1a10); }
+.lamp.t1 { background: radial-gradient(circle at 50% 40%, #b0782a, #5a2a10); }
+.lamp.t1 img, .lamp.t2 img { filter: saturate(.9) brightness(.9); }
+.lamp.on { background: radial-gradient(circle at 50% 40%, var(--lampOn), #ffc930 70%); border-color: #fff; box-shadow: 0 0 16px #ffd23f, 0 0 30px #ff9a00; z-index: 2; }
+.lamp.on img, .lamp.hit img { filter: none; transform: scale(1.06); }
+.lamp.on .bulb, .lamp.hit .bulb { background: #fff; box-shadow: 0 0 6px #fff; }
+.lamp.on .mul { color: #7a2a00; text-shadow: none; }
+.lamp.hit { animation: hit .36s steps(2) infinite; border-color: #fff; z-index: 2; }
+.lamp.hit.paid { box-shadow: 0 0 18px #5dff7a, 0 0 4px #fff inset; }
+@keyframes hit { 0% { background: radial-gradient(circle at 50% 40%, #fffbe0, #ffcf3a 70%); } 100% { background: radial-gradient(circle at 50% 40%, #ff7ab0, #b0206a 70%); } }
+.lamp .plus { position: absolute; top: 2px; right: 2px; font: 900 12px/1 system-ui; color: #5dff7a; text-shadow: 0 1px 0 #000, 0 0 4px #000; animation: rise 1.4s ease-out forwards; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-4px); opacity: 1; } }
+
+#screen { grid-area: 2 / 2 / 7 / 7; position: relative; background: #000; border-radius: 10px; overflow: hidden; border: 3px solid #222; box-shadow: 0 0 0 2px var(--gold2); }
+#screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#hud { position: absolute; left: 6px; right: 6px; top: 6px; display: flex; justify-content: space-between; gap: 6px; pointer-events: none; font-size: clamp(10px, 2.6vw, 12px); }
+#hud span { background: #000a; border-radius: 6px; padding: 2px 7px; border: 1px solid #fff3; white-space: nowrap; }
+#snorBar { display: inline-flex; gap: 2px; vertical-align: middle; }
+#snorBar i { width: 6px; height: 9px; border-radius: 2px; background: #333; }
+#snorBar i.on { background: #6fc3ff; box-shadow: 0 0 4px #6fc3ff; }
+
+/* ---- bet keys ---- */
+#keys { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 12px; }
+.key { background: linear-gradient(180deg, #fff 0%, #f1e3c8 40%, #c9a66a 100%); border: 0; border-radius: 10px; padding: 4px 2px 6px; color: #3a1000;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; box-shadow: 0 4px 0 #6a4510, 0 6px 10px #0008; position: relative; }
+.key:active, .key.press { transform: translateY(3px); box-shadow: 0 1px 0 #6a4510, 0 2px 4px #0008; }
+.key .bet { font: 700 clamp(15px, 4vw, 20px)/1 "Courier New", monospace; color: var(--led); background: var(--ledbg); border-radius: 4px; width: 90%; text-align: center; padding: 2px 0; text-shadow: 0 0 5px #ff1a00; }
+.key .bet.last { color: #6a2a2a; text-shadow: none; }
+.key img { width: 70%; aspect-ratio: 1; object-fit: contain; }
+.key .nm { font-size: clamp(9px, 2.4vw, 12px); font-weight: 700; white-space: nowrap; }
+.key .x { font: 900 clamp(10px, 2.6vw, 13px)/1 system-ui; color: #b0001a; }
+.key.won { animation: keywin .3s steps(2) 8; }
+@keyframes keywin { 50% { background: linear-gradient(180deg, #fffbe0, #ffe14a); box-shadow: 0 4px 0 #6a4510, 0 0 18px #ffd23f; } }
+
+#ctrl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+#ctrl button { border: 0; border-radius: 12px; padding: 10px 4px; font-weight: 900; font-size: clamp(13px, 3.4vw, 16px); color: #fff; box-shadow: 0 4px 0 #0009, 0 6px 10px #0007; text-shadow: 0 1px 0 #0008; }
+#ctrl button:active { transform: translateY(3px); box-shadow: 0 1px 0 #0009; }
+#ctrl button:disabled { filter: grayscale(.8) brightness(.55); cursor: default; }
+#ctrl small { display: block; font-size: 10px; font-weight: 400; opacity: .8; }
+.b-coin { background: linear-gradient(#ffd75a, #c88a00); color: #3a1a00 !important; text-shadow: none !important; }
+.b-clear { background: linear-gradient(#8a8a9a, #4a4a5a); }
+.b-all { background: linear-gradient(#ff9ad0, #b03a7a); }
+.b-auto { background: linear-gradient(#6a6a8a, #34345a); }
+.b-auto.on { background: linear-gradient(#5dff7a, #0a9a3a); animation: pulse 1s infinite; }
+.b-small { background: linear-gradient(#5ab0ff, #1a5ab0); }
+.b-big { background: linear-gradient(#ff6a5a, #b01a1a); }
+.b-take { background: linear-gradient(#5dff9a, #0a8a4a); }
+.b-start { background: linear-gradient(#ffe14a, #ff7a00); color: #3a1000 !important; text-shadow: none !important; font-size: clamp(16px, 4.4vw, 20px) !important; }
+.b-start.ready { animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { filter: brightness(1.25); box-shadow: 0 4px 0 #0009, 0 0 18px #ffe14a; } }
+.opts { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 13px; color: var(--dim); flex-wrap: wrap; }
+.opts button { background: #0006; border: 1px solid var(--line); color: var(--txt); border-radius: 8px; padding: 4px 10px; }
+#msg { text-align: center; min-height: 22px; margin-top: 8px; font-size: 14px; color: #ffe8a0; }
+
+/* ---- panels ---- */
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; }
+.kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; color: #ffe8a0; }
+.pos { color: #5dff7a !important; } .neg { color: #ff7a7a !important; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+td, th { padding: 3px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+th { color: var(--dim); font-weight: 400; }
+td img { width: 22px; height: 22px; vertical-align: middle; }
+.dex { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.dex div { text-align: center; font-size: 10px; color: var(--dim); }
+.dex img { width: 100%; aspect-ratio: 1; filter: grayscale(1) brightness(.3); }
+.dex .got img { filter: none; }
+.ach { display: grid; gap: 4px; }
+.ach div { padding: 4px 8px; border-radius: 6px; background: #0004; color: #7a6a6a; font-size: 13px; }
+.ach div.got { background: linear-gradient(90deg, #4a3a00, #2a1a00); color: #ffe8a0; }
+.ach div small { display: block; color: inherit; opacity: .75; font-size: 11px; }
+#hist { display: flex; flex-wrap: wrap; gap: 4px; }
+#hist span { background: #0006; border-radius: 6px; padding: 1px 5px; font-size: 12px; display: inline-flex; align-items: center; gap: 2px; }
+#hist img { width: 18px; height: 18px; }
+#hist .w { color: #5dff7a; }
+.help p { margin: 6px 0; }
+.help b { color: var(--gold); }
+kbd { background: #0008; border: 1px solid #555; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+#toast { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+#toast div { background: linear-gradient(90deg, #5a3a00, #2a1a00); border: 1px solid var(--gold); color: #fff3c0; padding: 8px 16px; border-radius: 10px; box-shadow: 0 6px 20px #000a; animation: toast 3.2s forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translateY(-12px); } 10%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+details summary { cursor: pointer; color: var(--gold); font-weight: 700; }
+
+@media (max-width: 1180px) {
+  #app { grid-template-columns: 1fr; max-width: 600px; }
+  #cab { order: 1; } #left { order: 2; } #right { order: 3; }
+  aside { position: static; max-height: none; }
+}
+@media (max-width: 480px) {
+  #app { padding: 10px 8px; gap: 12px; }
+  #cab { padding: 8px; border-radius: 18px 18px 12px 12px; }
+  #board { gap: 3px; padding: 4px; }
+  .lamp { border-radius: 6px; border-width: 1px; }
+  #keys { gap: 4px; }
+  .key { border-radius: 8px; padding: 3px 1px 4px; }
+  #ctrl { gap: 6px; }
+  #ctrl button { padding: 9px 2px; border-radius: 10px; }
+  .leds { gap: 5px; }
+  .led { padding: 2px 5px 3px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="left">
+    <h2>收支統計</h2>
+    <div class="kv" id="stats"></div>
+    <h2>最近 20 局</h2>
+    <div id="hist"></div>
+    <h2>寶可夢圖鑑</h2>
+    <div class="dex" id="dex"></div>
+    <h2>命中紀錄</h2>
+    <table id="hits"></table>
+    <h2>傳說事件</h2>
+    <div class="kv" id="events"></div>
+    <h2>成就 <span id="achN"></span></h2>
+    <div class="ach" id="ach"></div>
+    <p style="margin-top:14px"><button id="btnReset" style="background:#0006;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:4px 10px">清除紀錄重新開始</button></p>
+  </aside>
+
+  <main id="cab">
+    <div class="bulbs" id="bulbs"></div>
+    <div class="marquee"><h1>寶可夢小瑪莉</h1><div class="sub">跑燈・送燈・開火車・比大小</div></div>
+    <div class="leds">
+      <div class="led jp"><label>彩金</label><b id="ledJp">0</b></div>
+      <div class="led win" id="ledWinBox"><label>得分</label><b id="ledWin">0</b></div>
+      <div class="led"><label>總分</label><b id="ledCredit">0</b></div>
+    </div>
+    <div id="board">
+      <div id="screen">
+        <video id="vid" muted playsinline preload="auto"></video>
+        <canvas id="fx"></canvas>
+        <div id="hud"><span id="hudSnor" title="卡比獸鬧鐘：累積 10 次醒來送燈">💤 <span id="snorBar"></span></span><span id="hudStreak"></span></div>
+      </div>
+    </div>
+    <div id="keys"></div>
+    <div id="ctrl">
+      <button class="b-coin" id="bCoin">投幣<small>+100 分</small></button>
+      <button class="b-all" id="bAll">全押 +1<small>8 鍵各押 1</small></button>
+      <button class="b-clear" id="bClear">取消押分<small>退回分數</small></button>
+      <button class="b-auto" id="bAuto">自動<small>連續續押</small></button>
+      <button class="b-small" id="bSmall">小<small>1–6</small></button>
+      <button class="b-big" id="bBig">大<small>8–13</small></button>
+      <button class="b-take" id="bTake">收分<small>得分入帳</small></button>
+      <button class="b-start" id="bStart">開始<small>續押</small></button>
+    </div>
+    <div id="msg"></div>
+    <div class="opts">
+      <button id="bSound">🔊 音效</button>
+      <button id="bFast">🐢 一般速度</button>
+    </div>
+  </main>
+
+  <aside id="right" class="help">
+    <h2>怎麼玩</h2>
+    <p>1. 按<b>投幣</b>加分（開機先送 1,000 分）。</p>
+    <p>2. 按下面 8 個寶可夢押注鍵，按一下押 1 分，長按連押，每鍵最多 99。</p>
+    <p>3. 按<b>開始</b>，外圈燈開始跑，停在哪隻，押那隻的就照倍率賠。</p>
+    <p>4. 中獎後可以<b>收分</b>，或按<b>大／小</b>比大小：開出 1–13，8–13 算大、1–6 算小，猜中翻倍、猜錯歸零，開到 7 平手。</p>
+    <p>5. 押分歸零後再按開始，會自動押上一局的分數（續押）。</p>
+    <h2>倍率表</h2>
+    <table id="payTable"></table>
+    <h2>特殊燈</h2>
+    <p><b>精靈球「收服」</b>：送燈！燈光飛出去再停 1–3 盞，每盞都照押分賠。</p>
+    <p><b>進化石「進化」</b>：同樣押分免費再跑一局，獎金 ×2；連發中再進化變 ×3、×4。</p>
+    <p><b>卡比獸</b>：睡著了沒獎，但鬧鐘 +1，累積 10 次卡比獸醒來，送 2 盞燈。</p>
+    <p><b>傳說「LUCKY」</b>：抽一個傳說事件：</p>
+    <table id="luckyTable"></table>
+    <h2>彩金</h2>
+    <p>每局押分的 2% 會進彩金池。傳說燈抽到<b>超夢覺醒</b>，而且 8 個鍵都有押，就拿走整個彩金池！</p>
+    <h2>期望值</h2>
+    <p>只押單一鍵約 92%，8 鍵全押約 94.5%（多的是彩金回饋）。比大小是公平的 50/50。</p>
+    <h2>連勝</h2>
+    <p>連續中獎 3、5、10 局有特別演出。</p>
+    <h2>快捷鍵</h2>
+    <p><kbd>1</kbd>–<kbd>8</kbd> 押注　<kbd>空白</kbd> 開始　<kbd>C</kbd> 投幣　<kbd>A</kbd> 全押　<kbd>Z</kbd> 小　<kbd>X</kbd> 大　<kbd>Q</kbd> 收分</p>
+    <p style="color:var(--dim);font-size:12px">粉絲自製的免費小遊戲，不能儲值、不能兌換。寶可夢相關名稱與角色屬於原權利人。</p>
+  </aside>
+</div>
+<div id="toast"></div>
+<script src="core.js"></script>
+<script src="sprites.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
